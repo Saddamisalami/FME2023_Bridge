@@ -1,636 +1,829 @@
 #include <Arduino.h>
-#include "DFRobotDFPlayerMini.h"
+#include <SoftwareSerial.h>
+#include <DFRobotDFPlayerMini.h>
+
+const int busyPin = 9;
+const int rxPin = 10;
+const int txPin = 11;
+SoftwareSerial mySoftwareSerial(rxPin, txPin); // RX, TX
 
 DFRobotDFPlayerMini myDFPlayer;
 
-const int folderSpeechNumbers = 12;
+const int folderSpeechStreet = 1;
+const int folderSpeechCity = 2;
+const int folderSpeechPLZ = 3;
+const int folderSpeechLetters = 4;
+const int folderSpeechNumbers = 5;
 
-const int numberSpeechMax = 10;
-int numberSpeechValues[numberSpeechMax] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const int numbersSpeechMax = 15;
+int numbersSpeechValues[numbersSpeechMax] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-int track_0 = 1;
-int track_1 = 2;
-int track_2 = 3;
-int track_3 = 4;
-int track_4 = 5;
-int track_5 = 6;
-int track_6 = 7;
-int track_7 = 8;
-int track_8 = 9;
-int track_9 = 10;
-int track_ein = 11;
-int track_elf = 12;
-int track_hundert = 13;
-int track_sech = 14;
-int track_sieb = 15;
-int track_tausend = 16;
-int track_und = 17;
-int track_zehn = 18;
-int track_zig = 19;
-int track_zwan = 20;
-int track_zwoelf = 21;
+const int letterSpeechMax = 5;
+int letterSpeechValues[letterSpeechMax] = {0, 0, 0, 0, 0};
 
-void playNumber(int number)
+const int track_0 = 1;
+const int track_1 = 2;
+const int track_2 = 3;
+const int track_3 = 4;
+const int track_4 = 5;
+const int track_5 = 6;
+const int track_6 = 7;
+const int track_7 = 8;
+const int track_8 = 9;
+const int track_9 = 10;
+const int track_ein = 11;
+const int track_elf = 12;
+const int track_hundert = 13;
+const int track_sech = 14;
+const int track_sieb = 15;
+const int track_tausend = 16;
+const int track_und = 17;
+const int track_zehn = 18;
+const int track_zig = 19;
+const int track_zwan = 20;
+const int track_zwoelf = 21;
+
+const int track_a = 1;
+const int track_b = 2;
+const int track_c = 3;
+const int track_d = 4;
+const int track_e = 5;
+const int track_f = 6;
+const int track_g = 7;
+const int track_h = 8;
+const int track_i = 9;
+const int track_j = 10;
+const int track_k = 11;
+const int track_l = 12;
+const int track_m = 13;
+const int track_n = 14;
+const int track_o = 15;
+const int track_p = 16;
+const int track_q = 17;
+const int track_r = 18;
+const int track_s = 19;
+const int track_t = 20;
+const int track_u = 21;
+const int track_v = 22;
+const int track_w = 23;
+const int track_x = 24;
+const int track_y = 25;
+const int track_z = 26;
+const int track_ae = 27;
+const int track_oe = 28;
+const int track_ue = 29;
+const int track_ss = 30;
+
+void printDetail(uint8_t type, int value)
 {
-  int speechCounterCounter = 0;
-  if (number > 99999)
+  switch (type)
   {
-    int hunderttausender = (number / 100000) % 10;
-    switch (hunderttausender)
+  case TimeOut:
+    Serial.println(F("Time Out!"));
+    break;
+  case WrongStack:
+    Serial.println(F("Stack Wrong!"));
+    break;
+  case DFPlayerCardInserted:
+    Serial.println(F("Card Inserted!"));
+    break;
+  case DFPlayerCardRemoved:
+    Serial.println(F("Card Removed!"));
+    break;
+  case DFPlayerCardOnline:
+    Serial.println(F("Card Online!"));
+    break;
+  case DFPlayerPlayFinished:
+    Serial.print(F("Number:"));
+    Serial.print(value);
+    Serial.println(F(" Play Finished!"));
+    break;
+  case DFPlayerError:
+    Serial.print(F("DFPlayerError:"));
+    switch (value)
     {
-    case 1:
-      numberSpeechValues[speechCounterCounter] = track_ein;
+    case Busy:
+      Serial.println(F("Card not found"));
       break;
-    case 2:
-      numberSpeechValues[speechCounterCounter] = track_2;
+    case Sleeping:
+      Serial.println(F("Sleeping"));
       break;
-    case 3:
-      numberSpeechValues[speechCounterCounter] = track_3;
+    case SerialWrongStack:
+      Serial.println(F("Get Wrong Stack"));
       break;
-    case 4:
-      numberSpeechValues[speechCounterCounter] = track_4;
+    case CheckSumNotMatch:
+      Serial.println(F("Check Sum Not Match"));
       break;
-    case 5:
-      numberSpeechValues[speechCounterCounter] = track_5;
+    case FileIndexOut:
+      Serial.println(F("File Index Out of Bound"));
       break;
-    case 6:
-      numberSpeechValues[speechCounterCounter] = track_6;
+    case FileMismatch:
+      Serial.println(F("Cannot Find File"));
       break;
-    case 7:
-      numberSpeechValues[speechCounterCounter] = track_7;
-      break;
-    case 8:
-      numberSpeechValues[speechCounterCounter] = track_8;
-      break;
-    case 9:
-      numberSpeechValues[speechCounterCounter] = track_9;
+    case Advertise:
+      Serial.println(F("In Advertise"));
       break;
     default:
       break;
     }
-    speechCounterCounter = speechCounterCounter + 1;
-    numberSpeechValues[speechCounterCounter] = track_hundert;
-    speechCounterCounter = speechCounterCounter + 1;
+    break;
+  default:
+    break;
   }
-  if (number > 9999)
+}
+
+void playPLZ(uint32_t plz)
+{
+  myDFPlayer.playFolder(folderSpeechPLZ, plz);
+}
+
+void playCity(uint32_t city)
+{
+  myDFPlayer.playFolder(folderSpeechCity, city);
+}
+
+void playStreet(uint32_t street)
+{
+  myDFPlayer.playMp3Folder(street);
+}
+
+void playLetters(String letters)
+{
+  uint32_t speechCounter = 0;
+  letters.toLowerCase();
+  for (int i = 0; i < letterSpeechMax; i++)
   {
-    int zehntausender = (number / 10000) % 10;
-    int tausender = (number / 1000) % 10;
-    if (zehntausender == 0)
+    letterSpeechValues[i] = 0;
+  }
+
+  int lettersLength = letters.length();
+  for (int x = 0; x < lettersLength; x++)
+  {
+    char character = letters.charAt(x);
+    if (character == 'a')
     {
-      switch (tausender)
-      {
-      case 1:
-        numberSpeechValues[speechCounterCounter] = track_ein;
-        break;
-      case 2:
-        numberSpeechValues[speechCounterCounter] = track_2;
-        break;
-      case 3:
-        numberSpeechValues[speechCounterCounter] = track_3;
-        break;
-      case 4:
-        numberSpeechValues[speechCounterCounter] = track_4;
-        break;
-      case 5:
-        numberSpeechValues[speechCounterCounter] = track_5;
-        break;
-      case 6:
-        numberSpeechValues[speechCounterCounter] = track_6;
-        break;
-      case 7:
-        numberSpeechValues[speechCounterCounter] = track_7;
-        break;
-      case 8:
-        numberSpeechValues[speechCounterCounter] = track_8;
-        break;
-      case 9:
-        numberSpeechValues[speechCounterCounter] = track_9;
-        break;
-      default:
-        break;
-      }
+      letterSpeechValues[speechCounter] = track_a;
     }
-    else if (zehntausender == 1 && tausender == 1)
+    else if (character == 'b')
     {
-      numberSpeechValues[speechCounterCounter] = track_elf;
+      letterSpeechValues[speechCounter] = track_b;
     }
-    else if (zehntausender == 1 && tausender == 2)
+    else if (character == 'c')
     {
-      numberSpeechValues[speechCounterCounter] = track_zwoelf;
+      letterSpeechValues[speechCounter] = track_c;
     }
-    else if (zehntausender == 1)
+    else if (character == 'd')
     {
-      switch (tausender)
-      {
-      case 3:
-        numberSpeechValues[speechCounterCounter] = track_2;
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zehn;
-        break;
-      case 4:
-        numberSpeechValues[speechCounterCounter] = track_3;
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zehn;
-        break;
-      case 5:
-        numberSpeechValues[speechCounterCounter] = track_4;
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zehn;
-        break;
-      case 6:
-        numberSpeechValues[speechCounterCounter] = track_5;
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zehn;
-        break;
-      case 7:
-        numberSpeechValues[speechCounterCounter] = track_6;
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zehn;
-        break;
-      case 8:
-        numberSpeechValues[speechCounterCounter] = track_7;
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zehn;
-        break;
-      case 9:
-        numberSpeechValues[speechCounterCounter] = track_8;
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zehn;
-        break;
-      default:
-        break;
-      }
+      letterSpeechValues[speechCounter] = track_d;
     }
-    else if (tausender == 0)
+    else if (character == 'e')
     {
-      switch (zehntausender)
-      {
-      case 2:
-        numberSpeechValues[speechCounterCounter] = track_zwan;
-        break;
-      case 3:
-        numberSpeechValues[speechCounterCounter] = track_2;
-        break;
-      case 4:
-        numberSpeechValues[speechCounterCounter] = track_3;
-        break;
-      case 5:
-        numberSpeechValues[speechCounterCounter] = track_4;
-        break;
-      case 6:
-        numberSpeechValues[speechCounterCounter] = track_sech;
-        break;
-      case 7:
-        numberSpeechValues[speechCounterCounter] = track_sieb;
-        break;
-      case 8:
-        numberSpeechValues[speechCounterCounter] = track_7;
-        break;
-      case 9:
-        numberSpeechValues[speechCounterCounter] = track_8;
-        break;
-      default:
-        break;
-      }
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_zig;
+      letterSpeechValues[speechCounter] = track_e;
     }
+    else if (character == 'f')
+    {
+      letterSpeechValues[speechCounter] = track_f;
+    }
+    else if (character == 'g')
+    {
+      letterSpeechValues[speechCounter] = track_g;
+    }
+    else if (character == 'h')
+    {
+      letterSpeechValues[speechCounter] = track_h;
+    }
+    else if (character == 'i')
+    {
+      letterSpeechValues[speechCounter] = track_i;
+    }
+    else if (character == 'j')
+    {
+      letterSpeechValues[speechCounter] = track_j;
+    }
+    else if (character == 'k')
+    {
+      letterSpeechValues[speechCounter] = track_k;
+    }
+    else if (character == 'l')
+    {
+      letterSpeechValues[speechCounter] = track_l;
+    }
+    else if (character == 'm')
+    {
+      letterSpeechValues[speechCounter] = track_m;
+    }
+    else if (character == 'n')
+    {
+      letterSpeechValues[speechCounter] = track_n;
+    }
+    else if (character == 'o')
+    {
+      letterSpeechValues[speechCounter] = track_o;
+    }
+    else if (character == 'p')
+    {
+      letterSpeechValues[speechCounter] = track_p;
+    }
+    else if (character == 'q')
+    {
+      letterSpeechValues[speechCounter] = track_q;
+    }
+    else if (character == 'r')
+    {
+      letterSpeechValues[speechCounter] = track_r;
+    }
+    else if (character == 's')
+    {
+      letterSpeechValues[speechCounter] = track_s;
+    }
+    else if (character == 't')
+    {
+      letterSpeechValues[speechCounter] = track_t;
+    }
+    else if (character == 'u')
+    {
+      letterSpeechValues[speechCounter] = track_u;
+    }
+    else if (character == 'v')
+    {
+      letterSpeechValues[speechCounter] = track_v;
+    }
+    else if (character == 'w')
+    {
+      letterSpeechValues[speechCounter] = track_w;
+    }
+    else if (character == 'x')
+    {
+      letterSpeechValues[speechCounter] = track_x;
+    }
+    else if (character == 'y')
+    {
+      letterSpeechValues[speechCounter] = track_y;
+    }
+    else if (character == 'z')
+    {
+      letterSpeechValues[speechCounter] = track_z;
+    }
+   /*else if (character == 'ä')
+    {
+      letterSpeechValues[speechCounter] = track_ae;
+    }
+    else if (character == 'ö')
+    {
+      letterSpeechValues[speechCounter] = track_oe;
+    }
+    else if (character == 'ü')
+    {
+      letterSpeechValues[speechCounter] = track_ue;
+    }
+    else if (character == 'ß')
+    {
+      letterSpeechValues[speechCounter] = track_ss;
+    }*/
     else
     {
-      switch (tausender)
-      {
-      case 1:
-        numberSpeechValues[speechCounterCounter] = track_ein;
-        break;
-      case 2:
-        numberSpeechValues[speechCounterCounter] = track_2;
-        break;
-      case 3:
-        numberSpeechValues[speechCounterCounter] = track_3;
-        break;
-      case 4:
-        numberSpeechValues[speechCounterCounter] = track_4;
-        break;
-      case 5:
-        numberSpeechValues[speechCounterCounter] = track_5;
-        break;
-      case 6:
-        numberSpeechValues[speechCounterCounter] = track_6;
-        break;
-      case 7:
-        numberSpeechValues[speechCounterCounter] = track_7;
-        break;
-      case 8:
-        numberSpeechValues[speechCounterCounter] = track_8;
-        break;
-      case 9:
-        numberSpeechValues[speechCounterCounter] = track_9;
-        break;
-      default:
-        break;
-      }
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_und;
-      switch (zehntausender)
-      {
-      case 2:
-        numberSpeechValues[speechCounterCounter] = track_zwan;
-        break;
-      case 3:
-        numberSpeechValues[speechCounterCounter] = track_2;
-        break;
-      case 4:
-        numberSpeechValues[speechCounterCounter] = track_3;
-        break;
-      case 5:
-        numberSpeechValues[speechCounterCounter] = track_4;
-        break;
-      case 6:
-        numberSpeechValues[speechCounterCounter] = track_sech;
-        break;
-      case 7:
-        numberSpeechValues[speechCounterCounter] = track_sieb;
-        break;
-      case 8:
-        numberSpeechValues[speechCounterCounter] = track_7;
-        break;
-      case 9:
-        numberSpeechValues[speechCounterCounter] = track_8;
-        break;
-      default:
-        break;
-      }
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_zig;
     }
-    speechCounterCounter = speechCounterCounter + 1;
+    speechCounter = speechCounter + 1;
   }
-  else if (number > 999)
+
+  for (int i = 0; i < letterSpeechMax; i++)
   {
-    int tausender = (number / 1000) % 10;
-    switch (tausender)
-    {
-    case 1:
-      numberSpeechValues[speechCounterCounter] = track_ein;
-      break;
-    case 2:
-      numberSpeechValues[speechCounterCounter] = track_2;
-      break;
-    case 3:
-      numberSpeechValues[speechCounterCounter] = track_3;
-      break;
-    case 4:
-      numberSpeechValues[speechCounterCounter] = track_4;
-      break;
-    case 5:
-      numberSpeechValues[speechCounterCounter] = track_5;
-      break;
-    case 6:
-      numberSpeechValues[speechCounterCounter] = track_6;
-      break;
-    case 7:
-      numberSpeechValues[speechCounterCounter] = track_7;
-      break;
-    case 8:
-      numberSpeechValues[speechCounterCounter] = track_8;
-      break;
-    case 9:
-      numberSpeechValues[speechCounterCounter] = track_9;
-      break;
-    default:
-      break;
-    }
-    speechCounterCounter = speechCounterCounter + 1;
-  }
-  if (number > 999)
-  {
-    numberSpeechValues[speechCounterCounter] = track_tausend;
-    speechCounterCounter = speechCounterCounter + 1;
-  }
-  if (number > 99)
-  {
-    int hunderter = (number / 100) % 10;
-    switch (hunderter)
-    {
-    case 1:
-      numberSpeechValues[speechCounterCounter] = track_ein;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    case 2:
-      numberSpeechValues[speechCounterCounter] = track_2;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    case 3:
-      numberSpeechValues[speechCounterCounter] = track_3;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    case 4:
-      numberSpeechValues[speechCounterCounter] = track_4;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    case 5:
-      numberSpeechValues[speechCounterCounter] = track_5;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    case 6:
-      numberSpeechValues[speechCounterCounter] = track_6;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    case 7:
-      numberSpeechValues[speechCounterCounter] = track_7;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    case 8:
-      numberSpeechValues[speechCounterCounter] = track_8;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    case 9:
-      numberSpeechValues[speechCounterCounter] = track_9;
-      speechCounterCounter = speechCounterCounter + 1;
-      numberSpeechValues[speechCounterCounter] = track_hundert;
-      speechCounterCounter = speechCounterCounter + 1;
-      break;
-    default:
-      break;
-    }
-  }
-  if (number > 9)
-  {
-    int einer = number % 10;
-    int zehner = (number / 10) % 10;
-    if (zehner == 0)
-    {
-      switch (einer)
-      {
-      case 1:
-        numberSpeechValues[speechCounterCounter] = track_1;
-        break;
-      case 2:
-        numberSpeechValues[speechCounterCounter] = track_2;
-        break;
-      case 3:
-        numberSpeechValues[speechCounterCounter] = track_3;
-        break;
-      case 4:
-        numberSpeechValues[speechCounterCounter] = track_4;
-        break;
-      case 5:
-        numberSpeechValues[speechCounterCounter] = track_5;
-        break;
-      case 6:
-        numberSpeechValues[speechCounterCounter] = track_6;
-        break;
-      case 7:
-        numberSpeechValues[speechCounterCounter] = track_7;
-        break;
-      case 8:
-        numberSpeechValues[speechCounterCounter] = track_8;
-        break;
-      case 9:
-        numberSpeechValues[speechCounterCounter] = track_9;
-        break;
-      default:
-        break;
-      }
-    }
-    else
-    {
-      if (zehner == 1 && einer == 1)
-      {
-        numberSpeechValues[speechCounterCounter] = track_elf;
-      }
-      else if (zehner == 1 && einer == 2)
-      {
-        numberSpeechValues[speechCounterCounter] = track_zwoelf;
-      }
-      else if (zehner == 1)
-      {
-        switch (einer)
-        {
-        case 3:
-          numberSpeechValues[speechCounterCounter] = track_2;
-          speechCounterCounter = speechCounterCounter + 1;
-          numberSpeechValues[speechCounterCounter] = track_zehn;
-          break;
-        case 4:
-          numberSpeechValues[speechCounterCounter] = track_3;
-          speechCounterCounter = speechCounterCounter + 1;
-          numberSpeechValues[speechCounterCounter] = track_zehn;
-          break;
-        case 5:
-          numberSpeechValues[speechCounterCounter] = track_4;
-          speechCounterCounter = speechCounterCounter + 1;
-          numberSpeechValues[speechCounterCounter] = track_zehn;
-          break;
-        case 6:
-          numberSpeechValues[speechCounterCounter] = track_5;
-          speechCounterCounter = speechCounterCounter + 1;
-          numberSpeechValues[speechCounterCounter] = track_zehn;
-          break;
-        case 7:
-          numberSpeechValues[speechCounterCounter] = track_6;
-          speechCounterCounter = speechCounterCounter + 1;
-          numberSpeechValues[speechCounterCounter] = track_zehn;
-          break;
-        case 8:
-          numberSpeechValues[speechCounterCounter] = track_7;
-          speechCounterCounter = speechCounterCounter + 1;
-          numberSpeechValues[speechCounterCounter] = track_zehn;
-          break;
-        case 9:
-          numberSpeechValues[speechCounterCounter] = track_8;
-          speechCounterCounter = speechCounterCounter + 1;
-          numberSpeechValues[speechCounterCounter] = track_zehn;
-          break;
-        default:
-          break;
-        }
-      }
-      else if (einer == 0)
-      {
-        switch (zehner)
-        {
-        case 2:
-          numberSpeechValues[speechCounterCounter] = track_zwan;
-          break;
-        case 3:
-          numberSpeechValues[speechCounterCounter] = track_2;
-          break;
-        case 4:
-          numberSpeechValues[speechCounterCounter] = track_3;
-          break;
-        case 5:
-          numberSpeechValues[speechCounterCounter] = track_4;
-          break;
-        case 6:
-          numberSpeechValues[speechCounterCounter] = track_sech;
-          break;
-        case 7:
-          numberSpeechValues[speechCounterCounter] = track_sieb;
-          break;
-        case 8:
-          numberSpeechValues[speechCounterCounter] = track_7;
-          break;
-        case 9:
-          numberSpeechValues[speechCounterCounter] = track_8;
-          break;
-        default:
-          break;
-        }
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zig;
-      }
-      else
-      {
-        switch (einer)
-        {
-        case 1:
-          numberSpeechValues[speechCounterCounter] = track_ein;
-          break;
-        case 2:
-          numberSpeechValues[speechCounterCounter] = track_2;
-          break;
-        case 3:
-          numberSpeechValues[speechCounterCounter] = track_3;
-          break;
-        case 4:
-          numberSpeechValues[speechCounterCounter] = track_4;
-          break;
-        case 5:
-          numberSpeechValues[speechCounterCounter] = track_5;
-          break;
-        case 6:
-          numberSpeechValues[speechCounterCounter] = track_6;
-          break;
-        case 7:
-          numberSpeechValues[speechCounterCounter] = track_7;
-          break;
-        case 8:
-          numberSpeechValues[speechCounterCounter] = track_8;
-          break;
-        case 9:
-          numberSpeechValues[speechCounterCounter] = track_9;
-          break;
-        default:
-          break;
-        }
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_und;
-        switch (zehner)
-        {
-        case 2:
-          numberSpeechValues[speechCounterCounter] = track_zwan;
-          break;
-        case 3:
-          numberSpeechValues[speechCounterCounter] = track_2;
-          break;
-        case 4:
-          numberSpeechValues[speechCounterCounter] = track_3;
-          break;
-        case 5:
-          numberSpeechValues[speechCounterCounter] = track_4;
-          break;
-        case 6:
-          numberSpeechValues[speechCounterCounter] = track_sech;
-          break;
-        case 7:
-          numberSpeechValues[speechCounterCounter] = track_sieb;
-          break;
-        case 8:
-          numberSpeechValues[speechCounterCounter] = track_7;
-          break;
-        case 9:
-          numberSpeechValues[speechCounterCounter] = track_8;
-          break;
-        default:
-          break;
-        }
-        speechCounterCounter = speechCounterCounter + 1;
-        numberSpeechValues[speechCounterCounter] = track_zig;
-      }
-    }
-  }
-  else
-  {
-    int einer = number % 10;
-    switch (einer)
-    {
-    case 1:
-      numberSpeechValues[speechCounterCounter] = track_ein;
-      break;
-    case 2:
-      numberSpeechValues[speechCounterCounter] = track_2;
-      break;
-    case 3:
-      numberSpeechValues[speechCounterCounter] = track_3;
-      break;
-    case 4:
-      numberSpeechValues[speechCounterCounter] = track_4;
-      break;
-    case 5:
-      numberSpeechValues[speechCounterCounter] = track_5;
-      break;
-    case 6:
-      numberSpeechValues[speechCounterCounter] = track_6;
-      break;
-    case 7:
-      numberSpeechValues[speechCounterCounter] = track_7;
-      break;
-    case 8:
-      numberSpeechValues[speechCounterCounter] = track_8;
-      break;
-    case 9:
-      numberSpeechValues[speechCounterCounter] = track_9;
-      break;
-    default:
-      break;
-    }
-  }
-  for (int i = 0; i < numberSpeechMax; i++)
-  {
-    int speechFile = numberSpeechValues[i];
+    int speechFile = letterSpeechValues[i];
+
     if (speechFile > 0)
     {
-      if (myDFPlayer.available())
+      myDFPlayer.playFolder(folderSpeechLetters, speechFile);
+      while (digitalRead(busyPin) == HIGH)
       {
-        myDFPlayer.playFolder(folderSpeechNumbers, speechFile);
-        while (myDFPlayer.readType() != DFPlayerPlayFinished)
-        {
-        }
+      }
+      while (digitalRead(busyPin) == LOW)
+      {
       }
     }
   }
 }
 
+void playNumbers(uint32_t numbers)
+{
+  for (int i = 0; i < numbersSpeechMax; i++)
+  {
+    numbersSpeechValues[i] = 0;
+  }
 
+  uint32_t speechCounter = 0;
+  uint32_t hunderttausender = (numbers / 100000) % 10;
+  uint32_t zehntausender = (numbers / 10000) % 10;
+  uint32_t tausender = (numbers / 1000) % 10;
+  uint32_t hundertder = (numbers / 100) % 10;
+  uint32_t zehner = (numbers / 10) % 10;
+  uint32_t einer = numbers % 10;
+  // Serial.print(hunderttausender);
+  // Serial.print(zehntausender);
+  // Serial.print(tausender);
+  // Serial.print(hundertder);
+  // Serial.print(zehner);
+  // Serial.println(einer);
+
+  if (hunderttausender != 0)
+  {
+    switch (hunderttausender)
+    {
+    case 1:
+      numbersSpeechValues[speechCounter] = track_ein;
+      break;
+    case 2:
+      numbersSpeechValues[speechCounter] = track_2;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_6;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_7;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_hundert;
+    speechCounter = speechCounter + 1;
+  }
+  // 10
+  if (zehntausender == 1 && tausender == 0)
+  {
+    numbersSpeechValues[speechCounter] = track_zehn;
+    speechCounter = speechCounter + 1;
+  }
+  // 11
+  else if (zehntausender == 1 && tausender == 1)
+  {
+    numbersSpeechValues[speechCounter] = track_elf;
+    speechCounter = speechCounter + 1;
+  }
+  // 12
+  else if (zehntausender == 1 && tausender == 2)
+  {
+    numbersSpeechValues[speechCounter] = track_zwoelf;
+    speechCounter = speechCounter + 1;
+  }
+  // 13 - 19
+  else if (zehntausender == 1 && tausender > 2)
+  {
+    switch (hunderttausender)
+    {
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_sech;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_sieb;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_zehn;
+    speechCounter = speechCounter + 1;
+  }
+  // 20,30,40,50,60,70,80,90
+  else if (zehntausender > 1 && tausender == 0)
+  {
+    switch (zehntausender)
+    {
+    case 2:
+      numbersSpeechValues[speechCounter] = track_zwan;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_sech;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_sieb;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_zig;
+    speechCounter = speechCounter + 1;
+  }
+  // 21 -99
+  else if (zehntausender != 0 && tausender != 0)
+  {
+    switch (tausender)
+    {
+    case 1:
+      numbersSpeechValues[speechCounter] = track_ein;
+      break;
+    case 2:
+      numbersSpeechValues[speechCounter] = track_2;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_6;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_7;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_und;
+    speechCounter = speechCounter + 1;
+    switch (zehntausender)
+    {
+    case 2:
+      numbersSpeechValues[speechCounter] = track_zwan;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_sech;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_sieb;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_zig;
+    speechCounter = speechCounter + 1;
+  }
+  else
+  {
+    switch (tausender)
+    {
+    case 1:
+      numbersSpeechValues[speechCounter] = track_ein;
+      break;
+    case 2:
+      numbersSpeechValues[speechCounter] = track_2;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_6;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_7;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+  }
+  if (hunderttausender != 0 || zehntausender != 0 || tausender != 0)
+  {
+    numbersSpeechValues[speechCounter] = track_tausend;
+    speechCounter = speechCounter + 1;
+  }
+  if (hundertder != 0)
+  {
+    switch (hundertder)
+    {
+    case 1:
+      numbersSpeechValues[speechCounter] = track_ein;
+      break;
+    case 2:
+      numbersSpeechValues[speechCounter] = track_2;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_6;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_7;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_hundert;
+    speechCounter = speechCounter + 1;
+  }
+
+  if (zehner == 1 && einer == 0)
+  {
+    numbersSpeechValues[speechCounter] = track_zehn;
+    speechCounter = speechCounter + 1;
+  }
+  // 11
+  else if (zehner == 1 && einer == 1)
+  {
+    numbersSpeechValues[speechCounter] = track_elf;
+    speechCounter = speechCounter + 1;
+  }
+  // 12
+  else if (zehner == 1 && einer == 2)
+  {
+    numbersSpeechValues[speechCounter] = track_zwoelf;
+    speechCounter = speechCounter + 1;
+  }
+  // 13 - 19
+  else if (zehner == 1 && einer > 2)
+  {
+    switch (einer)
+    {
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_sech;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_sieb;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_zehn;
+    speechCounter = speechCounter + 1;
+  }
+  // 20,30,40,50,60,70,80,90
+  else if (zehner > 1 && einer == 0)
+  {
+    switch (zehner)
+    {
+    case 2:
+      numbersSpeechValues[speechCounter] = track_zwan;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_sech;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_sieb;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_zig;
+    speechCounter = speechCounter + 1;
+  }
+  // 21 -99
+  else if (zehner != 0 && einer != 0)
+  {
+    switch (einer)
+    {
+    case 1:
+      numbersSpeechValues[speechCounter] = track_ein;
+      break;
+    case 2:
+      numbersSpeechValues[speechCounter] = track_2;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_6;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_7;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_und;
+    speechCounter = speechCounter + 1;
+    switch (zehner)
+    {
+    case 2:
+      numbersSpeechValues[speechCounter] = track_zwan;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_sech;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_sieb;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+    numbersSpeechValues[speechCounter] = track_zig;
+    speechCounter = speechCounter + 1;
+  }
+  else if (einer != 0)
+  {
+    switch (einer)
+    {
+    case 1:
+      numbersSpeechValues[speechCounter] = track_1;
+      break;
+    case 2:
+      numbersSpeechValues[speechCounter] = track_2;
+      break;
+    case 3:
+      numbersSpeechValues[speechCounter] = track_3;
+      break;
+    case 4:
+      numbersSpeechValues[speechCounter] = track_4;
+      break;
+    case 5:
+      numbersSpeechValues[speechCounter] = track_5;
+      break;
+    case 6:
+      numbersSpeechValues[speechCounter] = track_6;
+      break;
+    case 7:
+      numbersSpeechValues[speechCounter] = track_7;
+      break;
+    case 8:
+      numbersSpeechValues[speechCounter] = track_8;
+      break;
+    case 9:
+      numbersSpeechValues[speechCounter] = track_9;
+      break;
+    default:
+      break;
+    }
+    speechCounter = speechCounter + 1;
+  }
+  else
+  {
+    numbersSpeechValues[speechCounter] = track_0;
+  }
+  for (int i = 0; i < numbersSpeechMax; i++)
+  {
+    int speechFile = numbersSpeechValues[i];
+    if (speechFile > 0)
+    {
+      myDFPlayer.playFolder(folderSpeechNumbers, speechFile);
+      while (digitalRead(busyPin) == HIGH)
+      {
+      }
+      while (digitalRead(busyPin) == LOW)
+      {
+      }
+    }
+  }
+}
 
 void setup()
 {
+  pinMode(busyPin, INPUT);
   Serial.begin(115200);
-  Serial2.begin(9600, SERIAL_8N1, 16, 17);
+  mySoftwareSerial.begin(9600);
 
   Serial.println();
   Serial.println(F("DFRobot DFPlayer Mini Demo"));
   Serial.println(F("Initializing DFPlayer ... (May take 3~5 seconds)"));
 
-  if (!myDFPlayer.begin(Serial2))
+  if (!myDFPlayer.begin(mySoftwareSerial))
   { // Use softwareSerial to communicate with mp3.
     Serial.println(F("Unable to begin:"));
     Serial.println(F("1.Please recheck the connection!"));
@@ -641,16 +834,21 @@ void setup()
   Serial.println(F("DFPlayer Mini online."));
 
   myDFPlayer.setTimeOut(500); // Set serial communictaion time out 500ms
-  myDFPlayer.volume(10);
+  myDFPlayer.volume(30);
   myDFPlayer.EQ(DFPLAYER_EQ_NORMAL);
+ 
+  //playStreet(727);
 }
 
 void loop()
 {
-  playNumber(1);
+  playPLZ(3);
   delay(2000);
-  playNumber(84);
+  playCity(5);
   delay(2000);
-  playNumber(349176);
+  playStreet(727);
   delay(2000);
+  playNumbers(13);
+  delay(2000);
+  playLetters("A");
 }
