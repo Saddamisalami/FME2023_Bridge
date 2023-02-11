@@ -1257,8 +1257,8 @@ void  TFT_eSprite::pushImage(int32_t x, int32_t y, int32_t w, int32_t h, const u
 // Intentionally not constrained to viewport area, does not manage 1bpp rotations
 void TFT_eSprite::setWindow(int32_t x0, int32_t y0, int32_t x1, int32_t y1)
 {
-  if (x0 > x1) swap_coord(x0, x1);
-  if (y0 > y1) swap_coord(y0, y1);
+  if (x0 > x1) transpose(x0, x1);
+  if (y0 > y1) transpose(y0, y1);
   
   int32_t w = width();
   int32_t h = height();
@@ -1700,13 +1700,13 @@ void TFT_eSprite::drawLine(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint3
 
   bool steep = abs(y1 - y0) > abs(x1 - x0);
   if (steep) {
-    swap_coord(x0, y0);
-    swap_coord(x1, y1);
+    transpose(x0, y0);
+    transpose(x1, y1);
   }
 
   if (x0 > x1) {
-    swap_coord(x0, x1);
-    swap_coord(y0, y1);
+    transpose(x0, x1);
+    transpose(y0, y1);
   }
 
   int32_t dx = x1 - x0, dy = abs(y1 - y0);;
@@ -2417,6 +2417,8 @@ void TFT_eSprite::drawGlyph(uint16_t code)
 {
   uint16_t fg = textcolor;
   uint16_t bg = textbgcolor;
+  bool getBG  = false;
+  if (fg == bg) getBG = true;
 
   // Check if cursor has moved
   if (last_cursor_x != cursor_x)
@@ -2551,7 +2553,7 @@ void TFT_eSprite::drawGlyph(uint16_t code)
               else drawFastHLine( fxs, y + cy, fl, fg);
               fl = 0;
             }
-            if (getColor) bg = getColor(x + cx, y + cy);
+            if (getBG) bg = readPixel(x + cx, y + cy);
             drawPixel(x + cx, y + cy, alphaBlend(pixel, fg, bg));
           }
           else
